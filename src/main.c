@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <8052.h>
 
-#define KEYPAD_ONLY
+//#define KEYPAD_ONLY
 
 #define KEY_R0 P2_0
 #define KEY_R1 P2_1
@@ -57,6 +57,15 @@ __code char *nameDb[] ={	"Person1",
 							"Person5",
 							"Person6",
 							"Person7"
+						};
+
+__code uint8_t *passDb[] ={	"1111",
+							"2222",
+							"3333",
+							"4444",
+							"5555",
+							"6666",
+							"7777"
 						};
 
 void _delay_ms(unsigned int msec)
@@ -305,7 +314,7 @@ int main(void)
 	uint8_t key_val = NO_KEY_PRESS;
 	uint8_t key_count = 0;
 	uint8_t key_buff[10];
-	P0 = 0xFF;
+	P0 = 0x00;
 	_SWITCH = 1;
 	lcd_init();
 	uart_init(11059200, 9600);
@@ -319,7 +328,7 @@ int main(void)
 		if(_SWITCH == 0)
 		{
 			lcd_cmd(0xC0);
-			lcd_puts("Button Press");
+			lcd_puts("Scanning       ");
 			index = 0;
 			tx_packet(gen_img, 11);
 			_delay_ms(100);
@@ -540,9 +549,59 @@ int main(void)
 				lcd_cmd(0xC0);
 				lcd_puts(nameDb[rx_buff[11]]);
 
-				// Key Pad part has to add here
-				// Active Low
-				P0 = 0x00;
+				_delay_ms(500);
+				lcd_cmd(0xC0);
+				lcd_puts("               ");
+				lcd_cmd(0xC0);
+				lcd_puts("PASSWD:");
+				key_count = 0;
+
+				while(key_count != 4)
+				{
+					key_val = read_keypad();
+					if(key_val != NO_KEY_PRESS)
+					{
+						lcd_dat('.');
+						key_buff[key_count++] = key_val;
+					}
+				}
+				key_count = 0;
+				_delay_ms(200);
+				lcd_cmd(0xC0);
+				if(	key_buff[0] == passDb[rx_buff[11]][0] && 
+					key_buff[1] == passDb[rx_buff[11]][1] &&
+					key_buff[2] == passDb[rx_buff[11]][2] &&
+					key_buff[3] == passDb[rx_buff[11]][3]
+					)	
+				{
+					lcd_cmd(0xC0);
+					lcd_puts("PASS OK     ");
+					_delay_ms(100);
+					lcd_cmd(0xC0);
+					lcd_puts("            ");
+					lcd_cmd(0xC0);
+					lcd_puts("OPTION:");
+					P3_7 = 1;
+					P3_7 = 1;
+
+					while(P3_7 == 1 && P3_6 == 1);
+					_delay_ms(10);
+					if(P3_7 == 0)
+					{
+						lcd_puts("OFF");
+						P0 = 0x00;
+					}
+					else if(P3_6 == 0)
+					{
+						lcd_puts("ON ");
+						P0 = 0xFF;
+					}
+				}
+				else
+				{
+					lcd_cmd(0xC0);
+					lcd_puts("PASS FAIL     ");
+				}
 
 			}
 		}
