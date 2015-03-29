@@ -2,6 +2,38 @@
 #include <stdint.h>
 #include <8052.h>
 
+#define KEYPAD_ONLY
+
+#define KEY_R0 P2_0
+#define KEY_R1 P2_1
+#define KEY_R2 P2_2
+#define KEY_R3 P2_3
+#define KEY_C0 P2_4
+#define KEY_C1 P2_5
+#define KEY_C2 P2_6
+#define KEY_C3 P2_7
+
+#define _SWITCH_DEB_DELAY 20
+
+#define NO_KEY_PRESS 	0
+#define KEY_VAL_0 		'D'
+#define KEY_VAL_1 		'C'
+#define KEY_VAL_2 		'B'
+#define KEY_VAL_3 		'A'
+#define KEY_VAL_4 		'#'
+#define KEY_VAL_5 		'9'
+#define KEY_VAL_6 		'6'	
+#define KEY_VAL_7 		'3'	
+#define KEY_VAL_8 		'0'	
+#define KEY_VAL_9 		'8'	
+#define KEY_VAL_10 		'5'	
+#define KEY_VAL_11 		'2'	
+#define KEY_VAL_12 		'*'	
+#define KEY_VAL_13 		'7'	
+#define KEY_VAL_14 		'4'	
+#define KEY_VAL_15 		'1'	
+
+
 #define LCD_PORT 	P1
 #define LCD_RS		P3_2
 #define LCD_EN		P3_3
@@ -34,6 +66,135 @@ for(i=0;i<msec;i++)
 {
 for(j=0;j<1275;j++);
 }
+}
+
+uint8_t read_keypad(void)
+{
+	KEY_C0 = 1;
+	KEY_C1 = 1;
+	KEY_C2 = 1;
+	KEY_C3 = 1;
+	KEY_R0 = 0;
+	KEY_R1 = 1;
+	KEY_R2 = 1;
+	KEY_R3 = 1;
+
+	if(KEY_C0 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C0 == 0);
+		return KEY_VAL_0;
+	}
+	if(KEY_C1 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C1 == 0);
+		return KEY_VAL_1;
+	}
+	if(KEY_C2 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C2 == 0);
+		return KEY_VAL_2;
+	}
+	if(KEY_C3 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C3 == 0);
+		return KEY_VAL_3;
+	}
+
+	KEY_R0 = 1;
+	KEY_R1 = 0;
+	KEY_R2 = 1;
+	KEY_R3 = 1;
+
+	if(KEY_C0 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C0 == 0);
+		return KEY_VAL_4;
+	}
+	if(KEY_C1 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C1 == 0);
+		return KEY_VAL_5;
+	}
+	if(KEY_C2 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C2 == 0);
+		return KEY_VAL_6;
+	}
+	if(KEY_C3 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C3 == 0);
+		return KEY_VAL_7;
+	}
+
+	KEY_R0 = 1;
+	KEY_R1 = 1;
+	KEY_R2 = 0;
+	KEY_R3 = 1;
+
+	if(KEY_C0 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C0 == 0);
+		return KEY_VAL_8;
+	}
+	if(KEY_C1 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C1 == 0);
+		return KEY_VAL_9;
+	}
+	if(KEY_C2 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C2 == 0);
+		return KEY_VAL_10;
+	}
+	if(KEY_C3 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C3 == 0);
+		return KEY_VAL_11;
+	}
+
+	KEY_R0 = 1;
+	KEY_R1 = 1;
+	KEY_R2 = 1;
+	KEY_R3 = 0;
+
+	if(KEY_C0 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C0 == 0);
+		return KEY_VAL_12;
+	}
+	if(KEY_C1 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C1 == 0);
+		return KEY_VAL_13;
+	}
+	if(KEY_C2 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C2 == 0);
+		return KEY_VAL_14;
+	}
+	if(KEY_C3 == 0)
+	{
+		_delay_ms(_SWITCH_DEB_DELAY);
+		while(KEY_C3 == 0);
+		return KEY_VAL_15;
+	}
+
+	return NO_KEY_PRESS;
 }
 
 void lcd_cmd(uint8_t cmd)
@@ -141,13 +302,20 @@ void tx_packet( char *_data,uint8_t len)
 int main(void)
 {
 	uint8_t _flag = 0;
+	uint8_t key_val = NO_KEY_PRESS;
+	uint8_t key_count = 0;
+	uint8_t key_buff[10];
 	P0 = 0xFF;
 	_SWITCH = 1;
 	lcd_init();
 	uart_init(11059200, 9600);
 	lcd_puts("  FPS System  ");
+	#ifdef KEYPAD_ONLY
+	lcd_cmd(0xC0);
+	#endif
 	while(1)
 	{
+		#ifndef KEYPAD_ONLY
 		if(_SWITCH == 0)
 		{
 			lcd_cmd(0xC0);
@@ -378,6 +546,34 @@ int main(void)
 
 			}
 		}
+		#else
+			key_val = read_keypad();
+			if(key_val != NO_KEY_PRESS)
+			{
+				lcd_dat('.');
+				key_buff[key_count] = key_val;
+				key_count++;
+				if(key_count == 4)
+				{
+					_delay_ms(200);
+					key_count = 0;
+					if(key_buff[0] == '1' && key_buff[1] == '1' && key_buff[2] == '1' && key_buff[3] == '1')
+					{
+						lcd_cmd(0xC0);
+						lcd_puts("OK  ");
+						lcd_cmd(0xC0);
+					}
+					else
+					{
+						lcd_cmd(0xC0);
+						lcd_puts("FAIL");
+						lcd_cmd(0xC0);
+					}
+				}
+			}
+		#endif
 	}
+
+	/* We never reach here */
 	return 0;
 }
